@@ -177,7 +177,7 @@ class GenreProcessor:
     def get_displayed(self):
         return (
             f'Intended direction: {self.get_direction()}\n'
-            f'Genres [EN]: {self.get_displayed_genres()}\n'
+            f'Genres [EN]: {self.get_displayed_genres("en")}\n'
             f'Genres [RU]: {self.get_displayed_genres("ru")}'
         )
 
