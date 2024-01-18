@@ -1,6 +1,3 @@
-from typing import Sequence
-
-
 genre_names = {
     'shounen ai': 'сёнэн-ай',
     'shounen': 'сёнэн',
@@ -57,9 +54,14 @@ wrong_genre_name_to_correct = {
     'psychology': 'psychological',
     'psyhology': 'psychological',
     'psycology': 'psychological',
+    'psychologic': 'psychological',
+    'psyhologic': 'psychological',
+    'psycologic': 'psychological',
     'super power': 'superpower',
     'dementia': 'madness',
     'reincarnation': 'isekai',
+    'bl': 'shounen ai',
+    'gl': 'shoujo ai',
 
     # RU
     'психология': 'психологическое',
@@ -69,10 +71,9 @@ wrong_genre_name_to_correct = {
     'сенен': 'сёнэн',
     'сёдзе': 'сёдзё',
     'седзе': 'сёдзё',
-    'bl': 'сёнэн-ай',
+    'гей': 'сёнэн-ай',
     'сёнен-ай': 'сёнэн-ай',
     'сенен-ай': 'сёнэн-ай',
-    'gl': 'сёдзё-ай',
     'сёдзе-ай': 'сёдзё-ай',
     'седзе-ай': 'сёдзё-ай',
     'сэйнен': 'сэйнэн',
@@ -97,94 +98,88 @@ derived_genre_names = {
 ignorable_genre_prefixes = ('спортив',)
 
 
-def get_genres(text: str) -> tuple[str]:
-    text = text.lower()
+class GenreProcessor:
+    def __init__(self, text: str):
+        text = text.lower()
 
-    for ignorable_genre in ignorable_genre_prefixes:
-        text = text.replace(ignorable_genre, '')
+        for ignorable_genre in ignorable_genre_prefixes:
+            text = text.replace(ignorable_genre, '')
 
-    for old_substr, new_substr in wrong_genre_name_to_correct.items():
-        text = text.replace(old_substr, new_substr)
+        for old_substr, new_substr in wrong_genre_name_to_correct.items():
+            text = text.replace(old_substr, new_substr)
 
-    found_genres = []
+        self._genres = []
 
-    for genre in [*genre_names.keys(), *genre_names.values()]:
-        if genre not in text:
-            continue
+        for genre in [*genre_names.keys(), *genre_names.values()]:
+            if genre not in text:
+                continue
 
-        if genre in derived_genre_names and (
-                derived_genre := derived_genre_names[genre]
-        ) in text and (
-                derived_genre_index := text.index(derived_genre)
-        ) != -1 and derived_genre_index == text.index(genre):
-            continue
+            if genre in derived_genre_names and (
+                    derived_genre := derived_genre_names[genre]
+            ) in text and (
+                    derived_genre_index := text.index(derived_genre)
+            ) != -1 and derived_genre_index == text.index(genre):
+                continue
 
-        found_genres.append(genre)
+            self._genres.append(genre)
 
-    return *found_genres,
+        new_genres = []
 
+        for en_genre, ru_genre in genre_names.items():
+            if en_genre not in self._genres and ru_genre not in self._genres:
+                continue
 
-def get_direction_by_en_genres(en_genres: Sequence[str]):
-    has_bl = has_gl = False
+            new_genres.append(en_genre)
 
-    if 'shounen ai' in en_genres or 'yaoi' in en_genres:
-        has_bl = True
+        self._genres = new_genres
 
-    if 'shoujo ai' in en_genres or 'yuri' in en_genres:
-        has_gl = True
+    def get_direction(self):
+        has_bl = has_gl = False
 
-    if has_bl and has_gl:
-        return 'Mixed'
+        if 'shounen ai' in self._genres or 'yaoi' in self._genres:
+            has_bl = True
 
-    if has_bl:
-        return 'BL'
+        if 'shoujo ai' in self._genres or 'yuri' in self._genres:
+            has_gl = True
 
-    if has_gl:
-        return 'GL'
+        if has_bl and has_gl:
+            return 'Mixed'
 
-    return 'Hetero'
+        if has_bl:
+            return 'BL'
 
+        if has_gl:
+            return 'GL'
 
-def convert_genres(genres: Sequence[str], to_lang='en') -> tuple[str]:
-    found_genres = []
+        return 'Hetero'
 
-    for en_genre, ru_genre in genre_names.items():
-        if en_genre not in genres and ru_genre not in genres:
-            continue
+    def get_genres(self, lang='en'):
+        return self._genres if lang != 'ru' else [genre_names[genre_en] for genre_en in self._genres]
 
-        found_genres.append(en_genre if to_lang == 'en' else ru_genre)
+    def get_displayed_genres(self, lang='en'):
+        genres = self.get_genres(lang)
 
-    return *found_genres,
+        if not genres:
+            return ''
 
+        output_text = ''
 
-def display_converted_genres(genres: Sequence[str]):
-    if not genres:
-        return ''
+        for genre in genres:
+            output_text += ', '
 
-    output_text = ''
-    is_englished = genres[0][0] in 'abcdefghijklmnopqrtsuvwxyz'
+            if lang != 'ru':
+                output_text += genre.title()
+            else:
+                output_text += genre.capitalize()
 
-    for genre in genres:
-        output_text += ', '
+        return output_text[2:]
 
-        if is_englished:
-            output_text += genre.title()
-        else:
-            output_text += genre.capitalize()
-
-    return output_text[2:]
-
-
-def display_data(source_text: str):
-    undisplayable_genres = get_genres(source_text)
-
-    en_genres, ru_genres = convert_genres(undisplayable_genres, 'en'), convert_genres(undisplayable_genres, 'ru')
-
-    print(
-        f'Intended direction: {get_direction_by_en_genres(en_genres)}\n'
-        f'Genres [EN]: {"-" if not en_genres else display_converted_genres(en_genres)}\n'
-        f'Genres [RU]: {"-" if not ru_genres else display_converted_genres(ru_genres)}'
-    )
+    def get_displayed(self):
+        return (
+            f'Intended direction: {self.get_direction()}\n'
+            f'Genres [EN]: {self.get_displayed_genres()}\n'
+            f'Genres [RU]: {self.get_displayed_genres("ru")}'
+        )
 
 
 is_reading_genres = False
@@ -215,7 +210,7 @@ while True:
             inputted_text = ''
 
         if inputted_text:
-            display_data(inputted_text)
+            print(GenreProcessor(inputted_text).get_displayed())
 
         is_reading_genres = False
     else:
