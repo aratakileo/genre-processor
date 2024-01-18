@@ -124,13 +124,13 @@ def get_genres(text: str) -> tuple[str]:
     return *found_genres,
 
 
-def get_direction_by_genres(genres: Sequence[str]):
+def get_direction_by_en_genres(en_genres: Sequence[str]):
     has_bl = has_gl = False
 
-    if 'shounen ai' in genres or 'сёнэн-ай' in genres or 'yaoi' in genres or 'яой' in genres:
+    if 'shounen ai' in en_genres or 'yaoi' in en_genres:
         has_bl = True
 
-    if 'shoujo ai' in genres or 'сёдзё-ай' in genres or 'yuri' in genres or 'юри' in genres:
+    if 'shoujo ai' in en_genres or 'yuri' in en_genres:
         has_gl = True
 
     if has_bl and has_gl:
@@ -157,16 +157,17 @@ def convert_genres(genres: Sequence[str], to_lang='en') -> tuple[str]:
     return *found_genres,
 
 
-def display_genres(genres: Sequence[str], from_lang='en'):
+def display_converted_genres(genres: Sequence[str]):
     if not genres:
         return ''
 
     output_text = ''
+    is_englished = genres[0][0] in 'abcdefghijklmnopqrtsuvwxyz'
 
     for genre in genres:
         output_text += ', '
 
-        if from_lang == 'en':
+        if is_englished:
             output_text += genre.title()
         else:
             output_text += genre.capitalize()
@@ -175,15 +176,15 @@ def display_genres(genres: Sequence[str], from_lang='en'):
 
 
 def display_data(source_text: str):
-    genres = get_genres(source_text)
+    undisplayable_genres = get_genres(source_text)
 
-    print('Intended direction:', get_direction_by_genres(genres))
+    en_genres, ru_genres = convert_genres(undisplayable_genres, 'en'), convert_genres(undisplayable_genres, 'ru')
 
-    en_genres = display_genres(convert_genres(genres, 'en'), 'en')
-    ru_genres = display_genres(convert_genres(genres, 'ru'), 'ru')
-
-    print('Genres [EN]:', en_genres if en_genres else '-')
-    print('Genres [RU]:', ru_genres if ru_genres else '-')
+    print(
+        f'Intended direction: {get_direction_by_en_genres(en_genres)}\n'
+        f'Genres [EN]: {"-" if not en_genres else display_converted_genres(en_genres)}\n'
+        f'Genres [RU]: {"-" if not ru_genres else display_converted_genres(ru_genres)}'
+    )
 
 
 is_reading_genres = False
@@ -196,12 +197,12 @@ print(
     '(with the exception of no more than one newline between the elements)\n'
     '- to start processing, enter double newline (press enter twice)\n'
     '- to apply new genres to an already formed list, insert a `+` before the new input\n'
-    '- to exit the program, enter newline (press enter) without any other input\n'
+    '- to exit the program, enter newline (press enter) without any other input'
 )
 
 while True:
     if not is_reading_genres:
-        print('Insert input below:')
+        print('\nInsert input below:')
 
     inputted_value = input().strip()
 
