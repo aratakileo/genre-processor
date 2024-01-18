@@ -108,7 +108,7 @@ class GenreProcessor:
         for old_substr, new_substr in wrong_genre_name_to_correct.items():
             text = text.replace(old_substr, new_substr)
 
-        self._genres = []
+        new_genres = []
 
         for genre in [*genre_names.keys(), *genre_names.values()]:
             if genre not in text:
@@ -121,25 +121,23 @@ class GenreProcessor:
             ) != -1 and derived_genre_index == text.index(genre):
                 continue
 
-            self._genres.append(genre)
+            new_genres.append(genre)
 
-        new_genres = []
+        self._en_genres = ()
 
         for en_genre, ru_genre in genre_names.items():
-            if en_genre not in self._genres and ru_genre not in self._genres:
+            if en_genre not in new_genres and ru_genre not in new_genres:
                 continue
 
-            new_genres.append(en_genre)
-
-        self._genres = new_genres
+            self._en_genres = (*self._en_genres, en_genre)
 
     def get_direction(self):
         has_bl = has_gl = False
 
-        if 'shounen ai' in self._genres or 'yaoi' in self._genres:
+        if 'shounen ai' in self._en_genres or 'yaoi' in self._en_genres:
             has_bl = True
 
-        if 'shoujo ai' in self._genres or 'yuri' in self._genres:
+        if 'shoujo ai' in self._en_genres or 'yuri' in self._en_genres:
             has_gl = True
 
         if has_bl and has_gl:
@@ -154,7 +152,7 @@ class GenreProcessor:
         return 'Hetero'
 
     def get_genres(self, lang='en'):
-        return self._genres if lang != 'ru' else [genre_names[genre_en] for genre_en in self._genres]
+        return self._en_genres if lang != 'ru' else [genre_names[genre_en] for genre_en in self._en_genres]
 
     def get_displayed_genres(self, lang='en'):
         genres = self.get_genres(lang)
