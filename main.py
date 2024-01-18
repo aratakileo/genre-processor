@@ -189,6 +189,15 @@ def display_data(source_text: str):
 is_reading_genres = False
 inputted_text = ''
 
+print(
+    'Welcome to the Genre Processor!\n\n'
+    'How to use:\n'
+    '- just insert the list of genres in any form '
+    '(with the exception of no more than one newline between the elements)\n'
+    '- to start processing, enter double newline (press enter twice)\n'
+    '- to apply new genres to an already formed list, insert a `+` before the new input\n'
+    '- to exit the program, enter newline (press enter) without any other input\n'
+)
 
 while True:
     if not is_reading_genres:
