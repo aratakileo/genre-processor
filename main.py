@@ -108,25 +108,19 @@ class GenreProcessor:
         for old_substr, new_substr in wrong_genre_name_to_correct.items():
             text = text.replace(old_substr, new_substr)
 
-        new_genres = []
-
-        for genre in [*genre_names.keys(), *genre_names.values()]:
-            if genre not in text:
-                continue
-
-            if genre in derived_genre_names and (
-                    derived_genre := derived_genre_names[genre]
-            ) in text and (
-                    derived_genre_index := text.index(derived_genre)
-            ) != -1 and derived_genre_index == text.index(genre):
-                continue
-
-            new_genres.append(genre)
-
         self._en_genres = ()
 
         for en_genre, ru_genre in genre_names.items():
-            if en_genre not in new_genres and ru_genre not in new_genres:
+            if en_genre not in text and ru_genre not in text:
+                continue
+
+            current_genre = ru_genre if ru_genre in text else en_genre
+
+            if current_genre in derived_genre_names and (
+                    derived_genre := derived_genre_names[current_genre]
+            ) in text and (
+                    derived_genre_index := text.index(derived_genre)
+            ) != -1 and derived_genre_index == text.index(current_genre):
                 continue
 
             self._en_genres = (*self._en_genres, en_genre)
